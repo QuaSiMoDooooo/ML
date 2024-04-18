@@ -1,0 +1,42 @@
+[dlookr包，自动输出一份数据诊断报告](https://mp.weixin.qq.com/s/5aN6bjhjainqNDeCjDEerQ)
+
+在拿到一份数据后常需要对数据进行简单的探索分析，今天来学习一个新的数据诊断R包——dlookr包
+
+```{r}
+# install.packages("dlookr")
+library(dlookr)
+```
+
+使用这个包中的`eda_report()`可以输出一份数据诊断报告。
+
+最简单的用法就是将数据集的名称放入函数即可。
+
+```{r}
+eda_report(heartfailure)
+```
+
+使用参数`output_format = "html"`
+
+```{r}
+eda_report(heartfailure,output_format = "html")
+```
+
+Warning: 'eda_report' is deprecated. 
+Use 'eda_web_report' and 'eda_paged_report' instead.
+
+使用函数`eda_web_report`
+
+```{r}
+eda_web_report(heartfailure,output_format = "html")
+```
+
+
+>但是我发现自动打开的网页都没有内容
+
+学习github readme 示例
+
+https://github.com/choonghyunryu/dlookr
+
+
+
+

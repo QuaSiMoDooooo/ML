@@ -1,0 +1,485 @@
+dlookr
+compatible
+tidyverse :dplyr ggplot2
+
+3 steps:
+
+- diagnose
+- explore
+- repair
+
+# 载入所需包
+
+```{r}
+library(dlookr)
+library(tidyverse)
+library(flextable)
+```
+
+# 数据集介绍
+
+自带数据集
+
+对1973年5-11月纽约每日空气质量的测量
+
+```{r}
+head(airquality, 10)
+
+head(airquality, 10) %>% flextable()
+```
+
+数据集中包含了6个变量分别是：
+
+- Ozone（罗斯福岛 1300 至 1500 小时的平均臭氧，单位为十亿分之一）
+- Solar.R （中央公园从 08：00 到 12：00 点在 4000-7700 埃频段内兰利的太阳辐射）
+- Wind（拉瓜迪亚机场 07：00 点和 10：00 点的平均风速（英里/小时））
+- Temp（拉瓜迪亚机场的每日最高温度（以华氏度为单位））
+- Month（月份）
+- Day（日期）
+
+我们还将用到ggplot2包中数据集diamonds，一个包含近5.4万颗钻石的价格和其他属性的数据集
+
+```{r}
+head(diamonds, 10) %>% flextable()
+```
+
+数据集中包含了10个变量分别是：
+
+- price（价格（美元）（$326–$18,823））
+- carat（钻石重量 (0.2–5.01)）
+- cut（切割质量（一般、良好、非常好、优质、理想））
+- color（钻石颜色，从 D（最好）到 J（最差））
+- clarity（衡量钻石净度的指标（I1（最差）、SI2、SI1、VS2、VS1、VVS2、VVS1、IF（最佳）））
+- x（以毫米为单位的长度 (0–10.74)）
+- y（以毫米为单位的宽度 (0–58.9)）
+- z（以毫米为单位的深度 (0–31.8)）
+- depth（总深度百分比 = z / mean(x, y) = 2 * z / (x + y) (43–79)）
+- table（菱形顶部相对于最宽点的宽度 (43–95)）
+
+最后我们还将使用iris数据集
+```{r}
+head(iris, 10) %>% flextable()
+```
+这个著名的（Fisher 或 Anderson 的）鸢尾花数据集分别给出了 3 种鸢尾花的 50 朵花的萼片长度和宽度变量以及花瓣长度和宽度的测量值（以厘米为单位）。品种是 Iris setosa、versicolor 和 virginica
+
+# diagnose
+
+```{r}
+diagnose(airquality) %>% flextable()
+```
+
+分类变量
+
+```
+diagnose_category(airquality) %>% flextable()
+```
+
+```{r}
+diagnose_category(diamonds) %>% flextable()
+```
+可以通过结果看到分类型变量（因子）的水平、每一个水平的数量、每一个水平的频数、每一个水平的占比以及每一个水平的等级排列
+
+
+数值变量
+
+```{r}
+diagnose_numeric(airquality) %>% flextable()
+```
+
+结果汇报了数值型变量的最小值、第一分位数、均值、中位数、第三分位数、最大值、等于0的数的数量、负数的数量以及异常值的数量
+
+异常值
+
+```{r}
+diagnose_outlier(diamonds) %>% flextable()
+```
+
+结果汇报了缺失值的数量、缺失值的比例、缺失值的平均值、变量中有缺失值的平均值、变量中没有缺失值的平均值（最后两项可以进行比较得出缺失值对变量的影响大小）
+
+异常值可视化
+
+```{r}
+plot_outlier(diamonds)
+```
+
+缺失值可视化
+
+```{r}
+plot_na_pareto(airquality)
+```
+从帕累托图可以看出缺失值的占比，以及缺失值的累计百分比
+
+只查看缺失值
+
+```{r}
+plot_na_pareto(airquality, only_na = T)
+```
+
+表格式缺失值
+
+```{r}
+airquality %>% 
+  plot_na_pareto(only_na = T, plot = F) %>% 
+  flextable()
+```
+
+但帕累托图看不到每一个变量之中的具体缺失值分布情况，这时就需要plot_na_hclust函数
+
+```{r}
+plot_na_hclust(airquality)
+```
+这是一个能够通过变量组合可视化缺失值的分布的函数。行是包含缺失值的变量，列是观察值。这些数据结构通过应用 hclust被分组到相似的组中。因此，可以直观地检查每个变量组合的缺失值分布情况。这样可以看出不同变量的缺失值在哪里属于同一个观测。
+
+但从上一张图中无法看出缺失值变量重叠的部分中，重叠本身是否有一些变量的值少，而有一些变量的值很多，plot_na_intersect()函数提供了解决方案
+
+```{r}
+plot_na_intersect(airquality)
+```
+这是一个可视化个案中缺失值的组合的函数。可视化由四个部分组成。左下方是最基本的，可视化交叉（交集）组合的情况。x轴是包含缺失值的变量，y轴代表变量组合的情况。在两个轴的边缘，案例的频率表示为条形图。最后，右上角的可视化表示数据集中包含缺失值的变量数量，以及包含缺失值和完整案例的观察数量。
+
+最后可以用diagnose_report()函数在短时间内生成pdf或html来总结汇报之前的所有结果
+
+# explore
+
+```{r}
+describe(iris, quantiles = c(0.25,0.5,0.75)) %>% 
+  flextable()
+```
+
+结果汇报了变量值的数量、缺失值数量、均值、平均值、标准差、标准误的均值、四分位距、偏度、峰度以及各种各样的分位数（为了避免输出太多的分位数，这里只输出25%、50%、75%分位数）
+
+describe()函数搭配dplyr包更加强大
+
+```{r}
+iris %>% 
+  group_by(Species) %>% 
+  select(Sepal.Length) %>% 
+  describe(quantiles = c(0.25, 0.5, 0.75)) %>% 
+  flextable()
+```
+
+检查数据的正态性是在分析数据之前的常规性操作 
+
+normality() 函数可以执行数值正态性的 Shapiro-Wilk 检验
+
+```{r}
+normality(iris) %>% flextable()
+```
+
+当然normality()函数同样也可以搭配强大的dplyr包使用，可以按照分类型变量对数值型变量的正态性检验进行分组汇报结果
+
+```{r}
+iris %>% 
+  group_by(Species) %>% 
+  normality() %>% 
+  flextable()
+```
+
+正态性检验可视化
+
+```{r}
+plot_normality(iris)
+```
+
+plot_normality()函数不仅提供了常规的QQ图，还提供了原始数据分布、对数转换后的数据分布、平方转换后的数据分布情况，可以让我们考虑是否对一些数据进行数据转换。
+
+相关关系 
+
+如果不指定变量，dlookr包中的correlate()函数就会计算所有变量之间的皮尔逊值（默认） 这里我们关注一个变量(Ozone)和其他变量之间的相关关系
+
+```{r}
+correlate(airquality, Ozone) %>% flextable()
+```
+
+相关关系可视化
+
+```{r}
+cor <- correlate(iris)
+plot(cor)
+```
+
+通过dplyr包我们可以进行分组的相关关系计算（更详细地探索变量之间的相关关系）
+
+```{r}
+group_cor <- iris %>% 
+  group_by(Species) %>% 
+  correlate()
+plot(group_cor)
+```
+
+dlookr包还可以检查两个特定变量之间的其他类型的关系，**例如两个分类变量**之间的关系。您只需要使用函数`target_by`()指定响应（或目标）变量，使用函数`relate()`指定预测变量。
+
+预测变量clarity对我们在diamonds数据集中的目标cut的影响，将通过**卡方独立性检验**进行分析。绘制它们将产生一个马赛克图，其中包含两个分类变量的频率。
+
+```{r}
+diamonds %>% 
+  target_by(cut) %>% #仅对一个变量和group_by()函数相似
+  relate(clarity) %>% 
+  summary()
+```
+
+```{r}
+diamonds %>% 
+  target_by(cut) %>% 
+  relate(clarity) %>% 
+  plot()
+```
+
+对马赛克图进行一个小科普：马赛克图（mosaicplot），显示分类数据中一对变量之间的关系，原理类似双向的100%堆叠式条形图，但其中所有条形在数值/标尺轴上具有相等长度，并会被划分成段。可以通过这两个变量来检测类别与其子类别之间的关系。马赛克图的主要优点是能按行或按列展示多个类别的比较关系。
+
+如果用相同的方法分析**分类型和数值型**变量，结果会又所不同，如果我们的目标变量是分类的并且我们的预测变量是数值的，那么将显示目标变量的每个类别的简单描述性统计数据（和上述函数describe相似）以及没有分类的数值变量和密度图
+
+```{r}
+iris %>% 
+  target_by(Species) %>%  # 分类
+  relate(Sepal.Length) %>%  # 数值
+  plot()
+```
+
+还有可能出现的情况：如果**响应变量是数值型，而预测变量是分类型或数值**型， 运用同样的方法则会应用简单线性回归。使用summary()或tab_model()将为您提供模型输出、系数和p值。如果将数值变量和分类变量的结果进行绘制则会产生箱线图， 而数值型与数值型变量之间的可视化会产生一个与置信区间拟合的很好的模型。
+
+响应变量是数值型，而预测变量是分类型
+
+```{r}
+library(sjPlot)
+iris %>% 
+  target_by(Sepal.Length) %>% 
+  relate(Species) %>% 
+  sjPlot::tab_model()
+```
+
+绘制图形
+
+```{r}
+iris %>% 
+  target_by(Sepal.Length) %>%      
+  relate(Species) %>% 
+  plot()
+```
+
+相应变量和预测变量都是数值型
+
+```{r}
+library(bruceR)
+airquality %>% 
+  target_by(Ozone) %>% 
+  relate(Temp) %>% 
+  bruceR::model_summary()
+```
+
+绘制图形
+
+```{r}
+airquality %>% 
+  na.omit() %>% #要去除缺失值
+  target_by(Ozone) %>%      
+  relate(Temp) %>% 
+  plot()
+```
+
+
+最后可以用eda_report()函数在短时间内生成pdf或html来总结汇报之前的所有结果
+
+# repair
+
+在文章的最后我们将关注如何处理缺失值和离群值，缺失值和离群值就像是数据集里面的“害虫”，我们要在探索性数据分析的最后将这一害虫除掉。
+
+对于数值型变量的缺失值来说可以用单个的值（single value）来进行填补，如均值（mean）、中位数（media）或者用模型（mode）预测的值；也可以用机器学习的算法（machine learning algorithm），如knn（K-nearest neighbors K最近邻算法）、rpart（recursive partitioning and regression trees 递归分区和回归树）、mice（multivariate imputation by chained equations 链式方程的多元填补
+
+```{r}
+bla <- imputate_na(.data = airquality, xvar = Ozone, yvar = Temp, method = "mean")
+#通过Temp变量的平均值来填补Ozone变量的缺失值
+
+summary(bla)
+```
+
+填补完成之后可以使用summary()函数来对比填补前后变量的各描述性统计图 然而通过描述性统计表的比较还是较难看出填补质量，可以通过密度图来可视化填补结果
+
+```{r}
+plot(bla)
+```
+
+通过密度图的可以看出缺失值的填补效果不是很理想，填补后的数据分布形态被大幅度改变 如果一种填补方法不理想，可以通过其他方式来进行缺失值填补，如knn法
+
+```{r}
+plot(imputate_na(.data = airquality, xvar = Ozone, yvar = Temp, method = "knn"))
+```
+
+可以看出knn这一填补法的效果较好，填补后的数据分布与原始数据相似度较高
+
+在我们不确定可以用什么方法的时候可以把所有的方法全试一遍，并将其可视化
+
+```{r}
+# mean
+plot(imputate_na(.data = airquality, xvar = Ozone, yvar = Temp, method = "mean"))
+```
+
+```{r}
+# median
+plot(imputate_na(.data = airquality, xvar = Ozone, yvar = Temp, method = "median"))
+```
+
+```{r}
+# mode
+plot(imputate_na(.data = airquality, xvar = Ozone, yvar = Temp, method = "mode"))
+```
+
+```{r}
+# rpart（recursive partitioning and regression trees 递归分区和回归树）
+plot(imputate_na(.data = airquality, xvar = Ozone, yvar = Temp,
+                 method = "rpart")) +
+  theme_classic() +
+  theme(legend.position = "top")
+```
+
+```{r}
+# mice（multivariate imputation by chained equations 链式方程的多元填补）
+plot(imputate_na(.data = airquality, xvar = Ozone, yvar = Temp, 
+                 method = "mice", seed = 999)) +
+  theme_minimal() +
+  theme(legend.position = "top")
+```
+
+当然好的缺失值填补对数据分布形态的改变是很小的，理想的情况下是填补前后数据分布形态重合
+
+---
+
+对于分类型变量来说，可以使用mode、rpart和mice的方法进行填补
+
+```{r}
+d <- diamonds %>% 
+  sample_n(1000)
+d[sample(seq(NROW(d)), 50), "cut"] <- NA
+d2 <- imputate_na(d, cut, price, method = "mice", seed = 999)
+```
+
+```{r}
+plot(d2)
+```
+
+对于分类型变量来说可以用条形图来可视化变量中的每一个分类的填补情况 也可以用summary()函数来用表的形式来呈现缺失值填补情况
+
+```{r}
+summary(d2)
+```
+
+---
+
+当填补了缺失值之后，我们就要来处理数据中的异常值 对于异常值的处理也可以像缺失值一样用均值（mean）、中位数（median）、模型（mode）或capping法（用 95 个百分位数估算上异常值，用 5 个百分位数估算下异常值）的生成的值来替换异常值
+
+>联系DESeq2处理outlier
+
+```{r}
+plot(imputate_outlier(diamonds, carat, method = "mean"))
+```
+
+```{r}
+plot(imputate_outlier(diamonds, carat, method = "median"))
+```
+
+```{r}
+plot(imputate_outlier(diamonds, carat, method = "mode"))
+```
+
+```{r}
+plot(imputate_outlier(diamonds, carat, method = "capping"))
+```
+
+## transforms
+
+除了数据的修复（repair）之外，我们还可以对数据集中的一些变量进行转换（transforms）。
+
+例如将数值型变量转换成分类型变量，我们将这一过程称之为“Categorization”，而这一过程也可以通过dlookr包中的`binning()`函数，这一函数支持以下类型的合并：
+
+- quantile，使用分位数进行分类（which categorizes using quantiles）
+- equal 归类为具有相等长度的段（categorizes to have equal length segments）
+- pretty 归类为中等程度的细分（无论它是什么）（categorizes into moderately good segments (whatever it it)）
+- kmeans 使用 K 均值聚类进行分类（categorization using K-means clustering）
+- bclust 使用带有 bagging 的聚类技术进行分类，其中 bagging 是 Bootstrap Aggregating 的缩写,一种旨在提高预测性能的机器学习元算法。（categorization using clustering technique with bagging, where bagging is an abbreviation for Bootstrap Aggregating - a machine learning meta-algorithm designed to improve predictive performance.）
+
+bclust方法听起来最奇特，所以，让我们先试试这个方法。首先让我们来看看airquality数据集中Ozone变量的分布
+
+```{r}
+library(DataExplorer)
+DataExplorer::plot_density(airquality$Ozone)
+```
+
+这一密度图提供了3个信息：在0到60这一区间内分布形态呈现一个抛物线， 在60到80的区域是一个分布形态呈现出平稳的样子， 之后稳步下降直到结束。
+
+因此，我们使用binning()将bin（或类别）的数量设置为3，并使用参数“labels”命名类别。
+
+```{r}
+library(classInt)
+set.seed(4444)
+bin <- binning(airquality$Ozone, type = "bclust", nbins = 3,
+               labels = c("cat1", "cat2", "cat3"))#这里需要安装classInt包
+```
+绘制结果表明我们的第一直觉是正确的，抛物线被单列为一类。
+
+```{r}
+plot(bin)
+```
+可以看到变量的第三类观测有些少，我们可以用summary()函数来进行查看
+
+```{r}
+summary(bin)
+```
+
+如果我们想知道转换后的分类变量边界的确切数字，只需要不在binning()命令中使用参数“lable”
+
+```{r}
+binning(airquality$Ozone, type = "bclust", nbins = 3)
+```
+
+同样我们可以检查所有其他所有的分类方法，从中选择一个我们感觉最好的。
+
+```{r}
+plot(binning(airquality$Ozone, type = "quantile", nbins = 3,
+              labels = c("cat1", "cat2", "cat3")))
+```
+```{r}
+plot(binning(airquality$Ozone, type = "equal", nbins = 3,
+              labels = c("cat1", "cat2", "cat3")))
+```
+```{r}
+plot(binning(airquality$Ozone, type = "pretty", nbins = 3))
+```
+```{r}
+plot(binning(airquality$Ozone, type = "kmeans", nbins = 3,
+              labels = c("cat1", "cat2", "cat3")))
+```
+
+在这里我会采用kmeans，因为它在每个类别中都有相对相似的数据计数，同时仍然用我们看到分布图形的三个特征，即开头的抛物线，中间的平缓和直到结尾的下降
+
+我们可以运用dplyr包，将转换后的Ozone变量添加到我们的数据集中
+
+```{r}
+airquality %>% 
+  mutate(
+    binning(airquality$Ozone, type = "kmeans", nbins = 3, labels = c("cat1", "cat2", "cat3"))
+  ) %>% 
+  head(n = 10) %>% 
+  flextable()
+```
+
+除了将数值型变量转化为字符型变量之外，dlookr包还可以通过transform()函数对数值型变量进行标准化处理和解决数据偏态分布问题
+
+对于标准化处理dlookr包提供了两种方法zscore（默认）:
+
+x−mean/sigma、minmax:x−min/max−min
+
+```{r}
+bla <- transform(airquality$Solar.R)
+plot(bla)
+```
+而对于数据的偏态分布，dlookr包提供了6种解决方案：log、log+1 、sqrt 、1/x 、x2、x3 其中我最喜欢的方法是log+1，因为它能很好地处理0值，而不会使得数据中产生“Infinities”（无穷大）
+```{r}
+find_skewness(mtcars, index = F)#find_skewness找到数据集中地偏态分布数据
+```
+
+```{r}
+#这里用到了mtcars数据集，老朋友了
+transform(mtcars$hp, method = "log+1") %>% 
+  plot()
+```
+
