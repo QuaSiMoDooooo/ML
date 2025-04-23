@@ -1,0 +1,1 @@
+[python中快速判断某个一维数组满足什么分布](https://mp.weixin.qq.com/s/e_e0K6ONwwBkjUGVFwEnPg)
